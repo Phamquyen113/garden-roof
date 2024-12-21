@@ -1,0 +1,132 @@
+﻿#include <GL/glut.h>
+#include <cmath>
+
+// Biến toàn cục lưu góc xoay
+float angleX = 0.0f; // Góc xoay quanh trục X (dùng cho pitch nếu cần)
+float angleY = 0.0f; // Góc xoay quanh trục Y
+
+// Biến toàn cục lưu vị trí camera
+float camPosX = 0.0f, camPosY = 0.0f, camPosZ = 3.0f; // Vị trí camera
+float camLookX = 0.0f, camLookY = 0.0f, camLookZ = -1.0f; // Hướng nhìn
+
+// Tốc độ di chuyển camera
+const float moveSpeed = 0.2f;
+const float rotateSpeed = 5.0f; // Tốc độ xoay (đơn vị: độ)
+
+// Hàm cập nhật hướng nhìn của camera dựa trên góc xoay quanh trục Y
+void updateCameraDirection() {
+    float radians = angleY * (3.14159f / 180.0f); // Chuyển đổi độ sang radian
+    camLookX = sin(radians); // Tính toán hướng nhìn mới
+    camLookZ = -cos(radians);
+}
+
+// Hàm thiết lập ánh sáng
+void setupLighting() {
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0); // Sử dụng nguồn sáng số 0
+
+    GLfloat lightPos[] = { 1.0f, 1.0f, 2.0f, 1.0f }; // Vị trí nguồn sáng
+    GLfloat lightAmbient[] = { 0.2f, 0.2f, 0.2f, 1.0f }; // Ánh sáng môi trường
+    GLfloat lightDiffuse[] = { 0.8f, 0.8f, 0.8f, 1.0f }; // Ánh sáng khuếch tán
+    GLfloat lightSpecular[] = { 1.0f, 1.0f, 1.0f, 1.0f }; // Ánh sáng phản xạ
+
+    glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbient);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpecular);
+
+    glShadeModel(GL_SMOOTH);
+}
+
+// Hàm vẽ hình cầu (chim)
+void drawSphere(float radius) {
+    glutSolidSphere(radius, 20, 20);
+}
+
+// Hàm vẽ mô hình chim (tối giản)
+void drawBird() {
+    glPushMatrix();
+    drawSphere(0.5f); // Thân chim
+    glPopMatrix();
+}
+
+// Hàm hiển thị
+void display() {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glLoadIdentity();
+
+    // Cập nhật vị trí camera với hướng nhìn
+    gluLookAt(camPosX, camPosY, camPosZ,
+        camPosX + camLookX, camPosY + camLookY, camPosZ + camLookZ,
+        0.0, 1.0, 0.0);
+
+    drawBird();
+    glutSwapBuffers();
+}
+
+// Hàm khởi tạo OpenGL
+void initOpenGL() {
+    glEnable(GL_DEPTH_TEST);
+    glClearColor(0.5f, 0.8f, 1.0f, 1.0f);
+    setupLighting();
+}
+
+// Hàm thay đổi kích thước cửa sổ
+void reshape(int w, int h) {
+    glViewport(0, 0, w, h);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(45.0, (float)w / (float)h, 1.0, 100.0);
+    glMatrixMode(GL_MODELVIEW);
+}
+
+// Hàm xử lý phím mũi tên (di chuyển lên, xuống, trái, phải)
+void specialKeys(int key, int x, int y) {
+    switch (key) {
+    case GLUT_KEY_UP: camPosY += moveSpeed; break;
+    case GLUT_KEY_DOWN: camPosY -= moveSpeed; break;
+    case GLUT_KEY_LEFT: camPosX -= moveSpeed; break;
+    case GLUT_KEY_RIGHT: camPosX += moveSpeed; break;
+    }
+    glutPostRedisplay();
+}
+
+// Hàm xử lý phím thường (tiến/lùi và xoay)
+void normalKeys(unsigned char key, int x, int y) {
+    switch (key) {
+    case 'w': // Tiến tới
+        camPosX += camLookX * moveSpeed;
+        camPosZ += camLookZ * moveSpeed;
+        break;
+    case 's': // Lùi lại
+        camPosX -= camLookX * moveSpeed;
+        camPosZ -= camLookZ * moveSpeed;
+        break;
+    case 'a': // Xoay trái
+        angleY -= rotateSpeed;
+        updateCameraDirection();
+        break;
+    case 'd': // Xoay phải
+        angleY += rotateSpeed;
+        updateCameraDirection();
+        break;
+    case 27: // ESC để thoát
+        exit(0);
+    }
+    glutPostRedisplay();
+}
+
+int main(int argc, char** argv) {
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+    glutInitWindowSize(800, 600);
+    glutCreateWindow("3D Bird Model with Camera Control");
+
+    initOpenGL();
+    glutDisplayFunc(display);
+    glutReshapeFunc(reshape);
+    glutSpecialFunc(specialKeys);
+    glutKeyboardFunc(normalKeys);
+    glutMainLoop();
+    return 0;
+}

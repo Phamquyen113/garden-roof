@@ -1,0 +1,400 @@
+﻿#include <GL/glut.h>
+#include <cmath>
+
+// Biến toàn cục lưu góc xoay
+float angleX = 0.0f; // Góc xoay quanh trục X (dùng cho pitch nếu cần)
+float angleY = 0.0f; // Góc xoay quanh trục Y
+
+// Biến toàn cục lưu vị trí camera
+float camPosX = 0.0f, camPosY = 0.0f, camPosZ = 3.0f; // Vị trí camera
+float camLookX = 0.0f, camLookY = 0.0f, camLookZ = -1.0f; // Hướng nhìn
+
+// Tốc độ di chuyển camera
+const float moveSpeed = 0.2f;
+const float rotateSpeed = 5.0f; // Tốc độ xoay (đơn vị: độ)
+
+// Hàm cập nhật hướng nhìn của camera dựa trên góc xoay quanh trục Y
+void updateCameraDirection() {
+    float radians = angleY * (3.14159f / 180.0f); // Chuyển đổi độ sang radian
+    camLookX = sin(radians); // Tính toán hướng nhìn mới
+    camLookZ = -cos(radians);
+}
+
+// Hàm thiết lập ánh sáng
+void setupLighting() {
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0); // Sử dụng nguồn sáng số 0
+
+    GLfloat lightPos[] = { 1.0f, 1.0f, 2.0f, 1.0f }; // Vị trí nguồn sáng
+    GLfloat lightAmbient[] = { 0.2f, 0.2f, 0.2f, 1.0f }; // Ánh sáng môi trường
+    GLfloat lightDiffuse[] = { 0.8f, 0.8f, 0.8f, 1.0f }; // Ánh sáng khuếch tán
+    GLfloat lightSpecular[] = { 1.0f, 1.0f, 1.0f, 1.0f }; // Ánh sáng phản xạ
+
+    glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbient);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpecular);
+
+    glShadeModel(GL_SMOOTH);
+}
+
+// st---------------------------------------CÁC HÌNH KHỐI----------------------------------------
+
+// Hàm vẽ hình cầu (Sphere)
+void drawSphere(float radius, int slices = 20, int stacks = 20) {
+    glutSolidSphere(radius, slices, stacks);
+}
+
+// Hàm vẽ hình trụ (Cylinder)
+void drawCylinder(float baseRadius, float topRadius, float height, int slices = 20, int stacks = 20) {
+    GLUquadric* quad = gluNewQuadric();
+    gluCylinder(quad, baseRadius, topRadius, height, slices, stacks);
+    gluDeleteQuadric(quad);
+}
+
+// Hàm vẽ hình trụ với 2 đầu bịt kín
+void drawClosedCylinder(float baseRadius, float topRadius, float height, int slices = 20, int stacks = 20) {
+    GLUquadric* quad = gluNewQuadric();
+
+    // Vẽ phần thân hình trụ
+    gluCylinder(quad, baseRadius, topRadius, height, slices, stacks);
+
+    // Vẽ nắp dưới
+    glPushMatrix();
+    glRotatef(180, 1.0f, 0.0f, 0.0f); // Lật ngược mặt dưới
+    gluDisk(quad, 0.0, baseRadius, slices, 1);
+    glPopMatrix();
+
+    // Vẽ nắp trên
+    glPushMatrix();
+    glTranslatef(0.0f, 0.0f, height); // Di chuyển đến đỉnh hình trụ
+    gluDisk(quad, 0.0, topRadius, slices, 1);
+    glPopMatrix();
+
+    gluDeleteQuadric(quad);
+}
+
+
+// Hàm vẽ hình nón (Cone)
+void drawCone(float baseRadius, float height, int slices = 20, int stacks = 20) {
+    glutSolidCone(baseRadius, height, slices, stacks);
+}
+
+// Hàm vẽ hình hộp (Cube)
+void drawCube(float size) {
+    glutSolidCube(size);
+}
+// Hàm vẽ hình hộp chữ nhật với chiều dài, rộng và cao tùy chỉnh
+void drawRectangularBox(float length, float width, float height) {
+    glPushMatrix();
+
+    // Vẽ 6 mặt của hình hộp chữ nhật
+    glBegin(GL_QUADS);
+
+    // Mặt trước
+    glNormal3f(0.0f, 0.0f, 1.0f);
+    glVertex3f(-length / 2, -height / 2, width / 2);
+    glVertex3f(length / 2, -height / 2, width / 2);
+    glVertex3f(length / 2, height / 2, width / 2);
+    glVertex3f(-length / 2, height / 2, width / 2);
+
+    // Mặt sau
+    glNormal3f(0.0f, 0.0f, -1.0f);
+    glVertex3f(-length / 2, -height / 2, -width / 2);
+    glVertex3f(length / 2, -height / 2, -width / 2);
+    glVertex3f(length / 2, height / 2, -width / 2);
+    glVertex3f(-length / 2, height / 2, -width / 2);
+
+    // Mặt trái
+    glNormal3f(-1.0f, 0.0f, 0.0f);
+    glVertex3f(-length / 2, -height / 2, -width / 2);
+    glVertex3f(-length / 2, -height / 2, width / 2);
+    glVertex3f(-length / 2, height / 2, width / 2);
+    glVertex3f(-length / 2, height / 2, -width / 2);
+
+    // Mặt phải
+    glNormal3f(1.0f, 0.0f, 0.0f);
+    glVertex3f(length / 2, -height / 2, -width / 2);
+    glVertex3f(length / 2, -height / 2, width / 2);
+    glVertex3f(length / 2, height / 2, width / 2);
+    glVertex3f(length / 2, height / 2, -width / 2);
+
+    // Mặt trên
+    glNormal3f(0.0f, 1.0f, 0.0f);
+    glVertex3f(-length / 2, height / 2, -width / 2);
+    glVertex3f(length / 2, height / 2, -width / 2);
+    glVertex3f(length / 2, height / 2, width / 2);
+    glVertex3f(-length / 2, height / 2, width / 2);
+
+    // Mặt dưới
+    glNormal3f(0.0f, -1.0f, 0.0f);
+    glVertex3f(-length / 2, -height / 2, -width / 2);
+    glVertex3f(length / 2, -height / 2, -width / 2);
+    glVertex3f(length / 2, -height / 2, width / 2);
+    glVertex3f(-length / 2, -height / 2, width / 2);
+
+    glEnd();
+    glPopMatrix();
+}
+
+// Hàm vẽ hình bán cầu (Hemisphere)
+void drawHemisphere(float radius, int slices = 20, int stacks = 10) {
+    GLUquadric* quad = gluNewQuadric();
+    gluPartialDisk(quad, 0, radius, slices, stacks, 0, 180);
+    gluDeleteQuadric(quad);
+}
+
+// Hàm vẽ hình mặt phẳng (Plane)
+void drawPlane(float width, float depth) {
+    glBegin(GL_QUADS);
+    glNormal3f(0.0f, 1.0f, 0.0f); // Pháp tuyến hướng lên trục Y
+    glVertex3f(-width / 2, 0.0f, -depth / 2);
+    glVertex3f(width / 2, 0.0f, -depth / 2);
+    glVertex3f(width / 2, 0.0f, depth / 2);
+    glVertex3f(-width / 2, 0.0f, depth / 2);
+    glEnd();
+}
+
+// Hàm vẽ hình Torus (vòng xuyến)
+void drawTorus(float innerRadius, float outerRadius, int nsides = 20, int rings = 20) {
+    glutSolidTorus(innerRadius, outerRadius, nsides, rings);
+}
+
+// Hàm vẽ hình đĩa (Disk)
+void drawDisk(float innerRadius, float outerRadius, int slices = 20, int loops = 20) {
+    GLUquadric* quad = gluNewQuadric();
+    gluDisk(quad, innerRadius, outerRadius, slices, loops);
+    gluDeleteQuadric(quad);
+}
+//-----------------------TEST-----------------------
+void test() {
+    // Vẽ hình cầu
+    glPushMatrix();
+    glTranslatef(-2.0f, 1.0f, 0.0f);
+    drawSphere(0.5f);
+    glPopMatrix();
+
+    // Vẽ hình trụ
+    glPushMatrix();
+    glTranslatef(0.0f, 1.0f, 0.0f);
+    drawCylinder(0.3f, 0.3f, 1.0f);
+    glPopMatrix();
+
+    // Vẽ hình nón
+    glPushMatrix();
+    glTranslatef(2.0f, 0.5f, 0.0f);
+    drawCone(0.5f, 1.0f);
+    glPopMatrix();
+
+    // Vẽ hình hộp
+    glPushMatrix();
+    glTranslatef(-2.0f, -1.0f, 0.0f);
+    drawCube(1.0f);
+    glPopMatrix();
+
+    // Vẽ hình mặt phẳng
+    glPushMatrix();
+    glTranslatef(0.0f, -1.0f, 0.0f);
+    drawPlane(3.0f, 3.0f);
+    glPopMatrix();
+
+    // Vẽ hình Torus
+    glPushMatrix();
+    glTranslatef(2.0f, -1.0f, 0.0f);
+    drawTorus(0.1f, 0.4f);
+    glPopMatrix();
+
+
+    // Vẽ hình trụ bịt kín 2 đầu
+    glPushMatrix();
+    glTranslatef(0.0f, 0.0f, 0.0f);
+    drawClosedCylinder(0.5f, 0.5f, 1.5f); // Bán kính đáy, bán kính đỉnh, chiều cao
+    glPopMatrix();
+
+
+    // Vẽ hình hộp chữ nhật
+    glPushMatrix();
+    glTranslatef(0.0f, 0.0f, 0.0f);
+    drawRectangularBox(2.0f, 1.0f, 1.5f); // Chiều dài, rộng, cao
+    glPopMatrix();
+}
+
+//-----------------------OBJECTS-----------------------
+
+
+// Biến điều khiển chuyển động của chim
+float wingAngle = 0.0f;
+bool wingUp = true;
+// Vị trí chim
+float birdPosX = 0.0f, birdPosY = 1.0f, birdPosZ = 0.0f;
+
+// Vị trí mây
+float cloudPosX = 0.0f, cloudPosY = 3.0f, cloudPosZ = 0.0f;
+
+// Hàm vẽ chim
+void drawBird() {
+    glPushMatrix();
+    glTranslatef(birdPosX, birdPosY, birdPosZ);
+
+    // Vẽ thân
+    glutSolidSphere(1, 15, 10);
+
+
+    // Vẽ đầu
+    glPushMatrix();
+    glTranslatef(0.0f, 0.4f, 0.0f);
+    glutSolidSphere(0.2, 15, 10);
+    glPopMatrix();
+
+    // Vẽ mỏ
+    glPushMatrix();
+    glTranslatef(0.0f, 0.3f, 0.25f);
+    drawCone(0.1f, 0.2f);
+    glPopMatrix();
+
+    // Vẽ cánh trái
+    glPushMatrix();
+    glTranslatef(-0.3f, 0.1f, 0.0f);
+    glRotatef(wingAngle, 0.0f, 0.0f, 1.0f);
+    drawHemisphere(0.3f);
+    glPopMatrix();
+
+    // Vẽ cánh phải
+    glPushMatrix();
+    glTranslatef(0.3f, 0.1f, 0.0f);
+    glRotatef(-wingAngle, 0.0f, 0.0f, 1.0f);
+    drawHemisphere(0.3f);
+    glPopMatrix();
+
+    glPopMatrix();
+}
+
+// Hàm vẽ đám mây
+void drawCloud() {
+    glPushMatrix();
+    glTranslatef(cloudPosX, cloudPosY, cloudPosZ);
+    drawSphere(0.5f);
+    glTranslatef(0.4f, 0.2f, 0.0f);
+    drawSphere(0.4f);
+    glTranslatef(-0.8f, -0.1f, 0.0f);
+    drawSphere(0.3f);
+    glPopMatrix();
+}
+
+// Hàm cập nhật chuyển động đập cánh
+void updateBirdWing() {
+    if (wingUp) {
+        wingAngle += 2.0f;
+        if (wingAngle > 30.0f) wingUp = false;
+    }
+    else {
+        wingAngle -= 2.0f;
+        if (wingAngle < -30.0f) wingUp = true;
+    }
+}
+
+// dpl
+void display() {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glLoadIdentity();
+
+    // Cập nhật vị trí camera với hướng nhìn
+    gluLookAt(camPosX, camPosY, camPosZ,
+        camPosX + camLookX, camPosY + camLookY, camPosZ + camLookZ,
+        0.0, 1.0, 0.0);
+
+
+    // Vẽ chim
+    drawBird();
+
+    // Vẽ đám mây
+    drawCloud();
+
+    updateBirdWing();
+    glutSwapBuffers();
+}
+
+// Hàm khởi tạo OpenGL
+void initOpenGL() {
+    glEnable(GL_DEPTH_TEST);
+    glClearColor(0.5f, 0.8f, 1.0f, 1.0f);
+    setupLighting();
+}
+
+// Hàm thay đổi kích thước cửa sổ
+void reshape(int w, int h) {
+    glViewport(0, 0, w, h);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(45.0, (float)w / (float)h, 1.0, 100.0);
+    glMatrixMode(GL_MODELVIEW);
+}
+void timer(int value) {
+    glutPostRedisplay();
+    glutTimerFunc(16, timer, 0);
+}
+// Hàm xử lý phím mũi tên (di chuyển lên, xuống, trái, phải)
+void specialKeys(int key, int x, int y) {
+    switch (key) {
+    case GLUT_KEY_UP: camPosY += moveSpeed; break;
+    case GLUT_KEY_DOWN: camPosY -= moveSpeed; break;
+    case GLUT_KEY_LEFT:   // Xoay trái
+        angleY -= rotateSpeed;
+        updateCameraDirection();
+        break;
+    case GLUT_KEY_RIGHT: // Xoay phải
+        angleY += rotateSpeed;
+        updateCameraDirection();
+        break;
+
+
+
+
+    }
+    glutPostRedisplay();
+}
+
+// keyb
+void normalKeys(unsigned char key, int x, int y) {
+    switch (key) {
+    case 'w': // Tiến tới
+        camPosX += camLookX * moveSpeed;
+        camPosZ += camLookZ * moveSpeed;
+        break;
+    case 's': // Lùi lại
+        camPosX -= camLookX * moveSpeed;
+        camPosZ -= camLookZ * moveSpeed;
+        break;
+    case 'a': camPosX -= moveSpeed; break;
+    case 'd': camPosX += moveSpeed; break;
+
+
+
+
+    case '1': cloudPosY += moveSpeed; break;
+    case '2': cloudPosY -= moveSpeed; break;
+    case '3': cloudPosX -= moveSpeed; break;
+    case '4': cloudPosX += moveSpeed; break;
+    case '5': cloudPosZ += moveSpeed; break;
+    case '6': cloudPosZ -= moveSpeed; break;
+    case 27: // ESC để thoát
+        exit(0);
+    }
+    glutPostRedisplay();
+}
+
+int main(int argc, char** argv) {
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+    glutInitWindowSize(800, 600);
+    glutCreateWindow("3D Bird Model with Camera Control");
+
+    initOpenGL();
+    glutDisplayFunc(display);
+    glutReshapeFunc(reshape);
+    glutSpecialFunc(specialKeys);
+    glutKeyboardFunc(normalKeys);
+    glutTimerFunc(16, timer, 0);
+    glutMainLoop();
+    return 0;
+}

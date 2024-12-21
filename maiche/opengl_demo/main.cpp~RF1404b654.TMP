@@ -1,0 +1,150 @@
+﻿#include <GL/glut.h>
+#include <cmath>
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+float cameraX = 0.0f, cameraY = 1.0f, cameraZ = 5.0f;
+float cameraYaw = -90.0f, cameraPitch = 0.0f;
+float speed = 0.06f;
+float sensitivity = 0.06f;
+
+int windowWidth = 800, windowHeight = 600;
+
+// Biến điều khiển chuyển động của tán lá
+float leafSwingAngle = 0.0f;
+
+// Hàm thiết lập ánh sáng
+void setupLighting() {
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    GLfloat lightPos[] = { 1.0f, 4.0f, 2.0f, 1.0f };
+    GLfloat lightAmbient[] = { 0.2f, 0.2f, 0.2f, 1.0f };
+    GLfloat lightDiffuse[] = { 0.8f, 0.8f, 0.8f, 1.0f };
+    GLfloat lightSpecular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    glLightfv(GL_LIGHT0, GL_POSITION, lightPos);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, lightAmbient);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, lightDiffuse);
+    glLightfv(GL_LIGHT0, GL_SPECULAR, lightSpecular);
+    glShadeModel(GL_SMOOTH);
+}
+
+void updateCamera() {
+    float frontX = cosf(cameraYaw * M_PI / 180.0f) * cosf(cameraPitch * M_PI / 180.0f);
+    float frontY = sinf(cameraPitch * M_PI / 180.0f);
+    float frontZ = sinf(cameraYaw * M_PI / 180.0f) * cosf(cameraPitch * M_PI / 180.0f);
+    gluLookAt(cameraX, cameraY, cameraZ, cameraX + frontX, cameraY + frontY, cameraZ + frontZ, 0.0f, 1.0f, 0.0f);
+}
+
+// Hàm vẽ hình trụ (Cylinder)
+void drawCylinder(float baseRadius, float topRadius, float height, int slices = 20, int stacks = 20) {
+    GLUquadric* quad = gluNewQuadric();
+    gluCylinder(quad, baseRadius, topRadius, height, slices, stacks);
+    gluDeleteQuadric(quad);
+}
+
+// Hàm vẽ hình cầu (Sphere)
+void drawSphere(float radius, int slices = 20, int stacks = 20) {
+    glutSolidSphere(radius, slices, stacks);
+}
+
+void setMaterial(float r, float g, float b, float shininess = 32.0f) {
+    GLfloat matAmbient[] = { r / 255.0f, g / 255.0f, b / 255.0f, 1.0f };
+    GLfloat matDiffuse[] = { r / 255.0f, g / 255.0f, b / 255.0f, 1.0f };
+    GLfloat matSpecular[] = { 0.2f, 0.2f, 0.2f, 1.0f };
+    GLfloat matShininess[] = { shininess };
+    glMaterialfv(GL_FRONT, GL_AMBIENT, matAmbient);
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, matDiffuse);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, matSpecular);
+    glMaterialfv(GL_FRONT, GL_SHININESS, matShininess);
+}
+
+// Hàm vẽ cây với tán lá đung đưa
+void drawTree() {
+    // Vẽ thân cây
+    setMaterial(139, 69, 19); // Màu nâu
+    glPushMatrix();
+    drawCylinder(0.1f, 0.08f, 1.5f);
+    glPopMatrix();
+
+    // Hiệu ứng đung đưa cho tán lá
+    float swayAmount = 5.0f; // Góc nghiêng tối đa
+    float swaySpeed = 1.0f;
+    leafSwingAngle += swaySpeed;
+    float swayOffset = sin(leafSwingAngle * M_PI / 180.0f) * swayAmount;
+
+    // Vẽ tán lá trên cao
+    setMaterial(34, 139, 34); // Màu xanh lá cây
+    glPushMatrix();
+    glTranslatef(0.0f, 1.5f, 0.0f); // Vị trí tán cây
+    glRotatef(swayOffset, 1.0f, 0.0f, 0.0f); // Đung đưa qua lại
+    drawSphere(0.5f); // Hình cầu tán cây chính
+
+    // Các tán nhỏ hơn xung quanh
+    glPushMatrix();
+    glTranslatef(-0.3f, 0.2f, 0.0f);
+    drawSphere(0.3f);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(0.3f, 0.2f, 0.0f);
+    drawSphere(0.3f);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(0.0f, 0.2f, -0.3f);
+    drawSphere(0.3f);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(0.0f, 0.2f, 0.3f);
+    drawSphere(0.3f);
+    glPopMatrix();
+
+    glPopMatrix(); // Kết thúc tán lá
+}
+
+void display() {
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glLoadIdentity();
+    updateCamera();
+
+    // Vẽ cây
+    glPushMatrix();
+    glTranslatef(0.0f, -1.0f, -3.0f); // Đặt cây ở vị trí dễ nhìn hơn
+    drawTree();
+    glPopMatrix();
+
+    glutSwapBuffers();
+}
+
+void initOpenGL() {
+    glEnable(GL_DEPTH_TEST);
+    glClearColor(0.5f, 0.8f, 0.92f, 1.0f); // Màu nền bầu trời
+    setupLighting();
+}
+
+void reshape(int w, int h) {
+    if (h == 0) h = 1;
+    float aspect = (float)w / (float)h;
+    glViewport(0, 0, w, h);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(60.0, aspect, 0.1, 100.0);
+    glMatrixMode(GL_MODELVIEW);
+}
+
+int main(int argc, char** argv) {
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+    glutInitWindowSize(windowWidth, windowHeight);
+    glutCreateWindow("Swinging Tree");
+
+    initOpenGL();
+    glutDisplayFunc(display);
+    glutIdleFunc(display);
+    glutReshapeFunc(reshape);
+
+    glutMainLoop();
+    return 0;
+}

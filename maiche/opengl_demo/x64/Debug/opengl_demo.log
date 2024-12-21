@@ -1,0 +1,25 @@
+﻿  main.cpp
+E:\dhmt\maiche\opengl_demo\include\vector_matrix.h(1,10): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+  (compiling source file 'main.cpp')
+  
+E:\dhmt\maiche\opengl_demo\main.cpp(445,13): warning C4305: 'argument': truncation from 'double' to 'float'
+E:\dhmt\maiche\opengl_demo\main.cpp(445,7): warning C4305: 'argument': truncation from 'double' to 'float'
+E:\dhmt\maiche\opengl_demo\main.cpp(447,33): warning C4305: 'argument': truncation from 'double' to 'float'
+E:\dhmt\maiche\opengl_demo\main.cpp(452,12): warning C4305: 'argument': truncation from 'double' to 'float'
+E:\dhmt\maiche\opengl_demo\main.cpp(452,7): warning C4305: 'argument': truncation from 'double' to 'float'
+E:\dhmt\maiche\opengl_demo\main.cpp(454,33): warning C4305: 'argument': truncation from 'double' to 'float'
+E:\dhmt\maiche\opengl_demo\main.cpp(460,31): warning C4305: 'argument': truncation from 'double' to 'float'
+E:\dhmt\maiche\opengl_demo\main.cpp(465,10): warning C4305: 'argument': truncation from 'double' to 'float'
+E:\dhmt\maiche\opengl_demo\main.cpp(466,24): warning C4305: 'argument': truncation from 'double' to 'float'
+E:\dhmt\maiche\opengl_demo\main.cpp(471,9): warning C4305: 'argument': truncation from 'double' to 'float'
+E:\dhmt\maiche\opengl_demo\main.cpp(472,24): warning C4305: 'argument': truncation from 'double' to 'float'
+E:\dhmt\maiche\opengl_demo\main.cpp(482,13): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+E:\dhmt\maiche\opengl_demo\main.cpp(484,31): warning C4305: 'argument': truncation from 'double' to 'float'
+E:\dhmt\maiche\opengl_demo\main.cpp(490,12): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+E:\dhmt\maiche\opengl_demo\main.cpp(492,33): warning C4305: 'argument': truncation from 'double' to 'float'
+E:\dhmt\maiche\opengl_demo\main.cpp(492,24): warning C4305: 'argument': truncation from 'double' to 'float'
+E:\dhmt\maiche\opengl_demo\main.cpp(522,16): warning C4305: 'argument': truncation from 'double' to 'float'
+E:\dhmt\maiche\opengl_demo\main.cpp(523,27): warning C4305: 'argument': truncation from 'double' to 'float'
+E:\dhmt\maiche\opengl_demo\main.cpp(529,12): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+E:\dhmt\maiche\opengl_demo\main.cpp(537,11): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+  opengl_demo.vcxproj -> E:\dhmt\maiche\x64\Debug\opengl_demo.exe

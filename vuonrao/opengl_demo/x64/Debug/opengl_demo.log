@@ -1,0 +1,7 @@
+﻿  main.cpp
+E:\dhmt\vuonrao\opengl_demo\include\vector_matrix.h(1,10): warning C4067: unexpected tokens following preprocessor directive - expected a newline
+  (compiling source file 'main.cpp')
+  
+E:\dhmt\vuonrao\opengl_demo\main.cpp(479,55): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+E:\dhmt\vuonrao\opengl_demo\main.cpp(487,54): warning C4244: 'argument': conversion from 'double' to 'float', possible loss of data
+  opengl_demo.vcxproj -> E:\dhmt\vuonrao\x64\Debug\opengl_demo.exe
